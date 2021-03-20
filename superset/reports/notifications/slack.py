@@ -107,16 +107,16 @@ class SlackNotification(BaseNotification):  # pylint: disable=too-few-public-met
         try:
             file = self._get_inline_screenshot()
 
-            s3 = boto3.resource(service_name='s3',
+            s3 = boto3.client(service_name='s3',
                                 aws_access_key_id=app.config['IMEDIA_AWS_ACCESS_KEY'],
                                 aws_secret_access_key=app.config['IMEDIA_AWS_SECRET_KEY'])
             choices = [chr(i + 97) for i in range(26)]
             choosed = [random.choice(choices) for i in
                        range(random.choice([5, 6, 7, 8, 9, 10]))]
             filename=''.join(choosed)
-            s3.meta.client.upload_file(Filename=file, Bucket=app.config['IMEDIA_SUPERSET_BUCKET'],
+            s3.put_object(Body=file, Bucket=app.config['IMEDIA_SUPERSET_BUCKET'],
                                        Key=filename)
-            response = s3.meta.client.generate_presigned_url('get_object',
+            response = s3.generate_presigned_url('get_object',
                                                              Params={
                                                                  'Bucket': app.config['IMEDIA_SUPERSET_BUCKET'],
                                                                  'Key': filename},
@@ -125,7 +125,7 @@ class SlackNotification(BaseNotification):  # pylint: disable=too-few-public-met
 
             return response
         except Exception as e:
-            logging.error(e.__str__)
+            logging.error(e.__str__())
             raise Exception('Error in Presignning url generation')
 
     def generatePayload(self,preSignedUrl):
